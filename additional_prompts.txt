@@ -1,0 +1,32 @@
+================================================================================
+ADDITIONAL PROMPTS / FOLLOW-UP FEEDBACK
+Small-Angle Approximation Demonstrator (Flash -> HTML5 conversion)
+These are the revision requests given AFTER the initial conversion was built.
+================================================================================
+
+--------------------------------------------------------------------------------
+PROMPT 2 (diagram + layout revisions)
+--------------------------------------------------------------------------------
+1. person should be facing towards ball.
+2. the vertical line is supposed to be arc
+3. Move \alpha outside so that it doesn't cut the line.
+4. the vertex of triangle should originate from the eye of the person.
+
+1. should be separate boxes for Distance and Diameter
+2. When screen size is max (web), Diagram should be in left column, and Distance
+   and Diameters should be on top of each other (equal heights and equal widths)
+3. Total height of Diagram box should be equal to Total height of two other boxes,
+   i.e., I want everything aligned w.r.t top and bottom edge.
+4. Also, when the screen size gets smaller, it should turn to 1 column layout.
+   3 boxes on top of each other.
+
+--------------------------------------------------------------------------------
+PROMPT 3 (alpha label nudge)
+--------------------------------------------------------------------------------
+[With the alpha (\alpha) label element selected in the diagram]
+
+move it little up.
+
+================================================================================
+END
+================================================================================

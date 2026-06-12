@@ -1,0 +1,321 @@
+/* ----------------------------------------------------------------------------
+   Hydrogen Atom Simulator -- sim-specific styles only.
+   Shared palette, layout, controls, focus handling come from foundation/kl-unl.css
+   (copied in unchanged). Relative units (rem/%/clamp) so the layout flexes from
+   desktop down to phone portrait and stays usable at 200% zoom.
+---------------------------------------------------------------------------- */
+
+/* Verdana is the original's embedded font; self-hosted for the labels still drawn
+   inside the atom-diagram canvas. (All HTML/SVG text uses the foundation font.) */
+@font-face {
+  font-family: "Verdana";
+  src: url("../assets/fonts/Verdana.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Body copy noticeably larger than the default, in rem so it tracks the user's
+   browser font setting (WCAG 1.4.4). */
+body { font-size: 1.125rem; }
+/* Heading left padding = 1.25rem so panel titles (e.g. "Photon Selection") line up
+   with the masthead title "Hydrogen Atom Simulator" (the masthead pads its content
+   by 20px = 1.25rem). */
+.panel__heading { font-size: 1.25rem; padding-left: 1.25rem; }
+.control-fieldset__legend { font-size: 1.05rem; }
+
+/* Full-width panels for the atom diagram and animation rows. */
+.sim-full {
+  grid-column: 1 / -1;
+  margin-bottom: 0.5rem;
+  min-width: 0;
+}
+
+/* ---- Responsive panel grid (atom / energy / photon / log) ----
+   One grid drives all three layouts via grid-template-areas, so the panels can be
+   rearranged without changing the DOM. Builds up from a single stacked column
+   (phone) to the two-column desktop layout. Never edits the foundation. */
+.sim-grid {
+  display: grid;
+  gap: 0.5rem;
+  align-items: start;
+  /* phone portrait: single stacked column */
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    "atom"
+    "energy"
+    "photon"
+    "log";
+}
+.sim-grid > .panel { margin-bottom: 0; min-width: 0; }
+.sim-area-atom   { grid-area: atom; }
+.sim-area-energy { grid-area: energy; }
+.sim-area-photon { grid-area: photon; }
+.sim-area-log    { grid-area: log; }
+/* Atom and Energy stretch to equal height when side by side (bottoms line up);
+   Photon and Log stay top-aligned (Log must not stretch to the tall Photon panel). */
+.sim-area-atom, .sim-area-energy { align-self: stretch; }
+.sim-area-photon, .sim-area-log  { align-self: start; }
+
+/* Reduced (tablet) width: Atom full, Energy | Event Log side by side, Photon full. */
+@media (min-width: 44rem) {
+  .sim-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "atom   atom"
+      "energy log"
+      "photon photon";
+  }
+}
+
+/* Large desktop ("web"): Atom | Energy and Photon | Event Log. The right column is a
+   fixed width so the Energy Level Diagram and Event Log are exactly equal width and
+   the Atom Diagram / Photon Selection take the wider remaining space. */
+@media (min-width: 70rem) {
+  .sim-grid {
+    grid-template-columns: minmax(0, 1fr) 21rem;
+    grid-template-areas:
+      "atom   energy"
+      "photon log";
+  }
+}
+
+/* ---- Atom diagram canvas ---- */
+.sim-canvas-wrap { line-height: 0; padding: 0.5rem 1rem 1rem; }
+#atom-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 48rem;
+  margin: 0 auto;
+  background: #000000;
+  border: var(--border-width, 1px) solid var(--border-color, #767676);
+  touch-action: none;
+}
+
+/* ---- Electron level dropdown ---- */
+.sim-select-row { grid-template-columns: auto 1fr; }
+.sim-select {
+  min-height: 2.75rem;
+  font-size: 1.05rem;
+  padding: 0.25rem 0.5rem;
+  color: var(--foreground-color, #1a1a1a);
+  background: var(--background-color, #ffffff);
+  border: var(--border-width, 1px) solid var(--border-color, #767676);
+  border-radius: 4px;
+}
+
+/* ---- Three MathJax readouts (frequency / wavelength / energy) ---- */
+.sim-readouts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  padding: 0 1rem;
+  margin: 0.25rem 0 0.85rem;
+}
+.sim-readout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.5rem 0.35rem;
+  border: var(--border-width, 1px) solid var(--border-color, #767676);
+  border-radius: 4px;
+  text-align: center;
+  min-width: 0;
+}
+.sim-readout__name {
+  font-style: italic;
+  font-size: 0.95rem;
+}
+.sim-readout__math {
+  font-size: 1.15rem;
+  min-height: 1.6rem;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+/* ---- Energy-level diagram (crisp SVG) ---- */
+.sim-scale-diagram { padding: 0.5rem 1rem 0; }
+.sim-svg { display: block; width: 100%; height: auto; margin: 0 auto; }
+.sim-scale-diagram .sim-svg { max-width: 14rem; }   /* keep the energy box <= atom box */
+
+/* ---- Photon scale bars: positioned HTML with MathJax tick labels ---- */
+.sim-bars { padding: 0.25rem 1rem 0.5rem; }
+.sim-bars-inner { display: flex; flex-direction: column; gap: 1.25rem; }
+.sim-bar {
+  display: grid;
+  grid-template-columns: 5rem 1fr;     /* narrower name column -> longer bar */
+  align-items: start;
+  gap: 0.4rem;
+}
+.sim-bar__name {
+  margin-top: 0.85rem;
+  text-align: right;
+  font-style: italic;
+  font-size: 0.95rem;
+  color: var(--foreground-color, #1a1a1a);
+}
+.sim-bar__track { position: relative; height: 3rem; }
+.sim-bar__line {
+  position: absolute; left: 0; right: 0; top: 1.3rem;
+  border-top: 2px solid var(--foreground-color, #1a1a1a);
+}
+.sim-bar__band {
+  position: absolute; top: 0.95rem; height: 0.75rem;
+  background: linear-gradient(to right, #e23b3b, #e8d23b, #3bc14a, #3b7fe2, #7d3be2);
+  opacity: 0.85;
+}
+.sim-bar__tick {
+  position: absolute; top: 0.9rem; width: 1px; height: 0.85rem;
+  background: #555; transform: translateX(-50%);
+}
+/* Every tick label sits on one row, horizontally centered on its tick mark, and
+   bottom-aligned with the others (single baseline). */
+.sim-bar__label {
+  position: absolute; top: 1.7rem; transform: translateX(-50%);
+  display: flex; align-items: flex-end; justify-content: center; height: 1.15rem;
+  white-space: nowrap; font-size: 0.75rem; color: var(--foreground-color, #1a1a1a);
+}
+.sim-bar__label mjx-container { font-size: 0.75rem !important; }
+.sim-bar__region {
+  position: absolute; top: 0.05rem; transform: translateX(-50%);
+  font-size: 0.8rem; color: #555; white-space: nowrap;
+}
+.sim-bar__marker {
+  position: absolute; top: 0.65rem; width: 3px; height: 1.3rem;
+  background: #c1272d; transform: translateX(-50%);
+}
+.sim-bar__mtri {
+  position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
+  border-left: 5px solid transparent; border-right: 5px solid transparent;
+  border-top: 7px solid #c1272d;
+}
+
+/* ---- Photon energy slider ---- */
+.sim-photon-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0 0 0.75rem;
+}
+.sim-slider {
+  width: 100%;
+  min-width: 0;
+  height: 2rem;
+  margin: 0;
+  cursor: pointer;
+}
+/* The slider shares the bars' name-column + track grid so its track lines up with
+   the scale bars and the thumb sits under the red markers. */
+.sim-slider-bar { align-items: center; margin-top: 0.25rem; }
+.sim-slider-track { min-width: 0; }
+
+/* ============================================================================
+   BUTTONS -- KL-UNL blue box, white text, large and clearly legible.
+   ========================================================================== */
+.sim-btn {
+  min-height: 2.75rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--button-foreground-color, #ffffff);
+  background: var(--button-background-color, #005a9c);
+  border: var(--border-width, 1px) solid var(--border-color, #767676);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.sim-btn:hover,
+.sim-btn:focus { filter: brightness(0.9); }
+.sim-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.sim-fire { font-size: 1.15rem; padding: 0.4rem 1.5rem; }
+.sim-fire-row { justify-content: center; }   /* Fire photon centered in the panel */
+
+/* Pause control pinned to the bottom of the atom diagram panel, centered */
+.sim-atom-pause { padding: 0.25rem 1rem 1rem; text-align: center; }
+
+/* ---- Preset transition buttons, grouped by series ---- */
+.sim-series {
+  display: grid;
+  grid-template-columns: 6rem 1fr;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.sim-series__name { font-weight: bold; }
+.sim-presets { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.sim-preset {
+  flex: 0 1 auto;
+  min-width: 3.25rem;
+  font-size: 1.1rem;       /* button glyphs (L-alpha, H-beta, …) clearly visible */
+  padding: 0.35rem 0.6rem;
+}
+/* MathJax glyph inside a preset button: white (inherits button color), sized to fit */
+.sim-preset mjx-container { font-size: 1.05em !important; margin: 0 !important; color: inherit; }
+
+/* ---- Energy Level Diagram readout (the MathJax E_n equation) ---- */
+.sim-scale-readout {
+  padding: 0.25rem 1rem 0.75rem;
+  text-align: center;
+}
+.sim-equation__math {
+  font-size: 1.2rem;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+/* ============================================================================
+   EVENT LOG -- high contrast, dark text (no gray).
+   ========================================================================== */
+.sim-log-controls { padding: 0 1rem 0.5rem; }
+.sim-log {
+  list-style: none;
+  margin: 0 1rem 0.75rem;
+  padding: 0;
+  max-height: 16rem;
+  overflow-y: auto;
+  overflow-x: hidden;        /* all three columns fit -> no horizontal scrolling */
+  border: var(--border-width, 1px) solid var(--border-color, #767676);
+}
+.sim-log__entry {
+  display: grid;
+  grid-template-columns: 4.6rem 2.9rem minmax(0, 1fr);   /* type | transition | photon */
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid #cfcfcf;
+  font-size: 0.78rem;        /* small enough that every column fits the box width */
+  color: var(--foreground-color, #1a1a1a);   /* always dark, high contrast */
+  background: transparent;
+  transition: background-color 1.2s ease;
+}
+/* New entries briefly highlight (background only), then settle -- text stays dark. */
+.sim-log__entry--new {
+  background: #fff3bf;
+  transition: none;
+}
+.sim-log__type { font-weight: 700; }
+.sim-log__transition { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sim-log__photon { display: flex; flex-direction: column; }
+.sim-log__action { font-style: italic; }
+/* MathJax inside the log stays inline-sized with the surrounding text */
+.sim-log__entry mjx-container { font-size: 0.95em !important; margin: 0 !important; }
+.sim-log__action mjx-container { font-style: normal; }
+
+/* ============================================================================
+   RESPONSIVE -- desktop side-by-side down to phone portrait single column.
+   ========================================================================== */
+@media (max-width: 56rem) {
+  .sim-scale-diagram .sim-svg { max-width: 20rem; }
+}
+
+@media (max-width: 34rem) {
+  .sim-select-row { grid-template-columns: 1fr; }
+  .sim-readouts { grid-template-columns: 1fr; }
+  .sim-series { grid-template-columns: 1fr; }
+  .sim-log__entry { grid-template-columns: 1fr; gap: 0.15rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sim-log__entry { transition: none; }
+}

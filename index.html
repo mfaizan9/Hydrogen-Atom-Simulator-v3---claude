@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hydrogen Atom Simulator</title>
+
+  <!-- KL-UNL shared foundation (copied in unchanged) -->
+  <link href="foundation/kl-unl.css" type="text/css" rel="stylesheet" media="all">
+  <!-- Sim-specific styles only -->
+  <link href="styles/styles.css" type="text/css" rel="stylesheet" media="all">
+</head>
+<body>
+  <a class="sr-only sr-only-focusable" href="#photon-heading">Skip to controls</a>
+
+  <div class="app-shell">
+
+    <!-- Title bar + Reset / Help / About come from the shared masthead component. -->
+    <kl-unl-masthead sim-id="hydrogenatom" json-url="foundation/contents.json"></kl-unl-masthead>
+
+    <main class="app-layout">
+
+      <!-- All four panels share one responsive grid (grid-template-areas):
+           large desktop  -> atom | energy  and  photon | log
+           reduced width  -> atom (full), energy | log, photon (full)
+           phone portrait -> single stacked column -->
+      <div class="sim-grid sim-full">
+
+      <section class="panel sim-area-atom" aria-labelledby="atom-heading">
+        <h2 id="atom-heading" class="panel__heading">Atom Diagram</h2>
+        <div class="panel__canvas-wrap sim-canvas-wrap">
+          <canvas id="atom-canvas" width="769" height="250"
+                  role="img" aria-label="Hydrogen atom diagram"
+                  aria-describedby="atom-desc"></canvas>
+        </div>
+        <p id="atom-desc" class="sr-only" aria-live="polite"></p>
+
+        <fieldset class="control-fieldset">
+          <legend class="control-fieldset__legend">Move the electron (demonstration)</legend>
+          <div class="control-row sim-select-row">
+            <label class="control-row__label" for="electron-select">electron level:</label>
+            <select id="electron-select" class="sim-select" aria-describedby="electron-hint">
+              <option value="1">Level 1 (ground state)</option>
+              <option value="2">Level 2</option>
+              <option value="3">Level 3</option>
+              <option value="4">Level 4</option>
+              <option value="5">Level 5</option>
+              <option value="6">Level 6</option>
+            </select>
+          </div>
+          <p id="electron-hint" class="panel__help">
+            Moving the electron to a new level (by dragging it on the diagram or with this
+            menu) clears the event log, then the atom decays back toward the ground state.
+          </p>
+        </fieldset>
+
+        <!-- Pause control pinned to the bottom of the atom diagram panel -->
+        <div class="sim-atom-pause">
+          <button type="button" class="button sim-btn" id="pause-btn" aria-pressed="false">Pause animation</button>
+        </div>
+      </section>
+
+      <!-- Energy Level Diagram -->
+      <section class="panel sim-scale sim-area-energy" aria-labelledby="scale-heading">
+        <h2 id="scale-heading" class="panel__heading">Energy Level Diagram</h2>
+        <div id="scale-diagram" class="sim-scale-diagram" role="img"
+             aria-label="Hydrogen energy level diagram" aria-describedby="scale-desc"></div>
+        <div class="sim-scale-readout">
+          <div id="energy-level-eqn" class="sim-equation__math" aria-hidden="true"></div>
+          <p id="energy-level-sr" class="sr-only"></p>
+        </div>
+        <p id="scale-desc" class="sr-only" aria-live="polite"></p>
+      </section>
+
+      <!-- Photon Selection -->
+      <section class="panel sim-photon sim-area-photon" aria-labelledby="photon-heading">
+        <h2 id="photon-heading" class="panel__heading">Photon Selection</h2>
+
+          <!-- Current photon shown three ways, in MathJax. -->
+          <div class="sim-readouts">
+            <div class="sim-readout">
+              <span class="sim-readout__name">frequency</span>
+              <span id="freq-eqn" class="sim-readout__math" aria-hidden="true"></span>
+              <span id="freq-sr" class="sr-only"></span>
+            </div>
+            <div class="sim-readout">
+              <span class="sim-readout__name">wavelength</span>
+              <span id="wave-eqn" class="sim-readout__math" aria-hidden="true"></span>
+              <span id="wave-sr" class="sr-only"></span>
+            </div>
+            <div class="sim-readout">
+              <span class="sim-readout__name">energy</span>
+              <span id="energy-eqn" class="sim-readout__math" aria-hidden="true"></span>
+              <span id="energy-sr" class="sr-only"></span>
+            </div>
+          </div>
+
+          <!-- Three horizontal scale bars (HTML + MathJax tick labels). -->
+          <div id="photon-bars" class="sim-bars" role="img"
+               aria-label="Frequency, wavelength, and energy scales with the current photon marked"
+               aria-describedby="photon-desc"></div>
+          <p id="photon-desc" class="sr-only" aria-live="polite"></p>
+
+          <fieldset class="control-fieldset">
+            <legend class="control-fieldset__legend">Photon energy</legend>
+            <div class="sim-photon-slider">
+              <label class="control-row__label" for="photon-range">select photon energy:</label>
+              <!-- Same name-column + track grid as the scale bars above, so the slider
+                   track lines up with them and the thumb sits under the red markers. -->
+              <div class="sim-bar sim-slider-bar">
+                <span class="sim-bar__name" aria-hidden="true"></span>
+                <div class="sim-slider-track">
+                  <input class="sim-slider" type="range"
+                         id="photon-range" min="1" max="584" step="1" value="178"
+                         aria-describedby="energy-eqn">
+                </div>
+              </div>
+            </div>
+            <div class="button-row sim-fire-row">
+              <button type="button" class="button sim-btn sim-fire" id="fire-btn">Fire photon</button>
+            </div>
+          </fieldset>
+
+          <fieldset class="control-fieldset">
+            <legend class="control-fieldset__legend">Preset transitions</legend>
+            <div class="sim-series" role="group" aria-label="Lyman series (down to level 1)">
+              <span class="sim-series__name">Lyman</span>
+              <div class="sim-presets" id="lyman-row"></div>
+            </div>
+            <div class="sim-series" role="group" aria-label="Balmer series (down to level 2)">
+              <span class="sim-series__name">Balmer</span>
+              <div class="sim-presets" id="balmer-row"></div>
+            </div>
+            <div class="sim-series" role="group" aria-label="Paschen series (down to level 3)">
+              <span class="sim-series__name">Paschen</span>
+              <div class="sim-presets" id="paschen-row"></div>
+            </div>
+          </fieldset>
+        </section>
+
+      <!-- Event Log -->
+      <section class="panel sim-logpanel sim-area-log" aria-labelledby="log-heading">
+        <h2 id="log-heading" class="panel__heading">Event Log</h2>
+        <div class="sim-log-controls">
+          <button type="button" class="button sim-btn" id="clear-log-btn">Clear log</button>
+        </div>
+        <ol id="log-list" class="sim-log" role="log" aria-live="polite"
+            aria-label="Event log, most recent entries at the bottom"></ol>
+        <p id="log-empty" class="panel__help">No events yet. Fire a photon to begin.</p>
+      </section>
+
+      </div><!-- /sim-grid -->
+
+      <p id="sr-status" class="sr-only" aria-live="polite"></p>
+
+    </main>
+  </div>
+
+  <!-- Foundation equation helper (copied in unchanged) -->
+  <script src="foundation/kl-unl.js"></script>
+  <!-- Shared masthead custom element (copied in unchanged) -->
+  <script src="foundation/kl-unl-masthead.js"></script>
+
+  <!-- MathJax (vendored locally; SVG output is self-contained, no fonts/CDN). -->
+  <script>
+    window.MathJax = {
+      // Skip (don't hang on) any optional component the menu tries to lazy-load
+      // that we didn't vendor offline -- e.g. the Speech-Rule-Engine for the menu's
+      // "Speech Text" option. Everything else (incl. "Show Math As MathML / TeX")
+      // works from the bundle below, which includes the MathML input jax.
+      loader: { failed: function (err) { console.warn('[MathJax] optional component not vendored:', err.message); } },
+      tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] },
+      svg: { fontCache: 'local' },
+      // Right-clicking an equation opens the MathJax menu ("Show Math As" ->
+      // MathML / TeX Commands, "Copy to Clipboard", etc.). assistiveMml is off
+      // (we already expose screen-reader prose for every equation).
+      options: { enableMenu: true, menuOptions: { settings: { assistiveMml: false } } }
+    };
+  </script>
+  <script src="assets/mathjax/tex-mml-svg.js"></script>
+
+  <!-- Sim logic -->
+  <script src="simulation.js"></script>
+</body>
+</html>

@@ -8,7 +8,7 @@
   <!-- KL-UNL shared foundation (copied in unchanged) -->
   <link href="foundation/kl-unl.css" type="text/css" rel="stylesheet" media="all">
   <!-- Sim-specific styles only -->
-  <link href="styles/styles.css" type="text/css" rel="stylesheet" media="all">
+  <link href="styles/styles.css?v=8" type="text/css" rel="stylesheet" media="all">
 </head>
 <body>
   <a class="sr-only sr-only-focusable" href="#photon-heading">Skip to controls</a>
@@ -122,18 +122,12 @@
           </fieldset>
 
           <fieldset class="control-fieldset">
-            <legend class="control-fieldset__legend">Preset transitions</legend>
-            <div class="sim-series" role="group" aria-label="Lyman series (down to level 1)">
-              <span class="sim-series__name">Lyman</span>
-              <div class="sim-presets" id="lyman-row"></div>
-            </div>
-            <div class="sim-series" role="group" aria-label="Balmer series (down to level 2)">
-              <span class="sim-series__name">Balmer</span>
-              <div class="sim-presets" id="balmer-row"></div>
-            </div>
-            <div class="sim-series" role="group" aria-label="Paschen series (down to level 3)">
-              <span class="sim-series__name">Paschen</span>
-              <div class="sim-presets" id="paschen-row"></div>
+            <legend class="control-fieldset__legend">Preset transitions (positioned by photon energy)</legend>
+            <!-- Buttons are placed along the same energy axis as the bars/slider, at
+                 each transition's energy, staggered into two rows (as in the original). -->
+            <div class="sim-bar sim-preset-bar" role="group" aria-label="Preset transition buttons, positioned by photon energy">
+              <span class="sim-bar__name" aria-hidden="true"></span>
+              <div class="sim-preset-axis" id="preset-axis"></div>
             </div>
           </fieldset>
         </section>
@@ -180,6 +174,6 @@
   <script src="assets/mathjax/tex-mml-svg.js"></script>
 
   <!-- Sim logic -->
-  <script src="simulation.js"></script>
+  <script src="simulation.js?v=8"></script>
 </body>
 </html>

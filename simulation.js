@@ -934,33 +934,19 @@ function seriesName(letter) {
 
   /* =========================================================================
    * 5c -- ENERGY LEVEL DIAGRAM drawn as crisp SVG (high contrast).
-   *   Level lines use a 1/n vertical scale: this keeps the levels converging
-   *   toward the 0 eV ionization limit but compresses the very large n=1 -> n=2
-   *   gap so the diagram is more balanced. Each level is labelled with its EXACT
-   *   energy (-13.6/n^2 eV). The upper levels still crowd, so their labels are
-   *   nudged apart to a minimum gap and joined to their line by leader lines.
+   *   Level lines are placed TO SCALE at E_n = -13.6/n^2 eV, so the 0 eV ionization
+   *   limit sits proportionally just above the bunched upper levels (n>=3). As in
+   *   the original, the crowding is handled by labelling ONLY the current level
+   *   (the "n=N" / energy label moves to whichever level the electron is on); the
+   *   other levels are plain tick lines.
    * ======================================================================= */
   function renderScaleDiagram() {
-    const level = sim.scaleMC.level;
-    const W = 300, H = 446, xL = 96, xR = 204;
-    const top = 48, bot = 412;
-    const yForN = n => top + (1 / n) * (bot - top);   // 1/n scale (n=1 lowest, ->0 at top)
-    const levels = [];
-    for (let n = 1; n <= 6; n++) {
-      const mag = 13.6 / (n * n);                       // |E_n|, for the exact label
-      levels.push({ n, mag, lineY: yForN(n), cur: isFinite(level) && level === n });
-    }
-    // de-clutter the labels: walk top -> bottom, pushing each label down to keep
-    // a minimum vertical gap (the top cluster spreads out; lower levels keep their
-    // true position because there is already room).
-    const minGap = 17;
-    let lastY = top + 4;
-    for (const lv of levels.slice().sort((a, b) => a.lineY - b.lineY)) {
-      lv.labelY = Math.max(lv.lineY, lastY + minGap);
-      lastY = lv.labelY;
-    }
+    const level = sim.scaleMC.level;          // 1..6, or Infinity when ionized
+    const W = 300, H = 430, xL = 96, xR = 204;
+    const top = 54, bot = 410;
+    const yForMag = mag => top + (mag / 13.6) * (bot - top);  // |E| in eV; 0->top, 13.6->bot
     let s = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="sim-svg" preserveAspectRatio="xMidYMid meet">`;
-    // ionization limit (E = 0)
+    // ionization limit (E = 0) -- to scale, just above the upper levels
     s += `<line x1="${xL}" y1="${top}" x2="${xR}" y2="${top}" stroke="${MUTED}" stroke-width="1.5" stroke-dasharray="5 4"/>`;
     s += `<text x="${xR + 8}" y="${top + 4}" font-size="13" fill="${MUTED}">0 eV</text>`;
     s += `<text x="${(xL + xR) / 2}" y="${top - 10}" font-size="12.5" fill="${MUTED}" text-anchor="middle">ionization limit</text>`;
@@ -969,17 +955,17 @@ function seriesName(letter) {
       s += `<polygon points="${xL + 30},${top - 24} ${xR - 30},${top - 24} ${(xL + xR) / 2},${top - 15}" fill="${MARK}"/>`;
       s += `<text x="${(xL + xR) / 2}" y="${top - 28}" font-size="13" fill="${MARK}" text-anchor="middle" font-weight="700">ionized (E &gt; 0)</text>`;
     }
-    // level lines (to scale) + de-cluttered labels with leader lines
-    for (const lv of levels) {
-      const color = lv.cur ? MARK : FG;
-      const ly = lv.lineY, by = lv.labelY;
-      s += `<line x1="${xL}" y1="${ly.toFixed(1)}" x2="${xR}" y2="${ly.toFixed(1)}" stroke="${color}" stroke-width="${lv.cur ? 5 : 2}"/>`;
-      if (Math.abs(by - ly) > 2.5) {
-        s += `<line x1="${xL}" y1="${ly.toFixed(1)}" x2="${xL - 8}" y2="${(by - 4).toFixed(1)}" stroke="${MUTED}" stroke-width="0.8"/>`;
-        s += `<line x1="${xR}" y1="${ly.toFixed(1)}" x2="${xR + 8}" y2="${(by - 4).toFixed(1)}" stroke="${MUTED}" stroke-width="0.8"/>`;
+    // level lines n = 1..6 to scale; only the CURRENT level is labelled
+    for (let n = 1; n <= 6; n++) {
+      const mag = 13.6 / (n * n);             // |E_n|
+      const y = yForMag(mag);
+      const cur = isFinite(level) && level === n;
+      s += `<line x1="${xL}" y1="${y.toFixed(1)}" x2="${xR}" y2="${y.toFixed(1)}" ` +
+           `stroke="${cur ? MARK : "#555555"}" stroke-width="${cur ? 5 : 1.6}"/>`;
+      if (cur) {
+        s += `<text x="${xL - 9}" y="${(y + 4.5).toFixed(1)}" font-size="14" text-anchor="end" fill="${MARK}" font-weight="700">n=${n}</text>`;
+        s += `<text x="${xR + 9}" y="${(y + 4.5).toFixed(1)}" font-size="13" fill="${MARK}" font-weight="700">−${toFixed(mag, 1)} eV</text>`;
       }
-      s += `<text x="${xL - 10}" y="${by.toFixed(1)}" font-size="14" text-anchor="end" fill="${color}" font-weight="${lv.cur ? '700' : '400'}">n=${lv.n}</text>`;
-      s += `<text x="${xR + 10}" y="${by.toFixed(1)}" font-size="13" fill="${color}" font-weight="${lv.cur ? '700' : '400'}">−${toFixed(lv.mag, 1)} eV</text>`;
     }
     s += `</svg>`;
     scaleDiagram.innerHTML = s;
@@ -1114,24 +1100,40 @@ function seriesName(letter) {
   sim.logMC.onClear = function () { logList.innerHTML = ""; logEmpty.hidden = false; };
 
   /* =========================================================================
-   * 5g -- preset transition buttons (generated from the snap-point table)
+   * 5g -- preset transition buttons, positioned along the energy axis.
+   *   Each button sits at its transition's energy (so it lines up with the bars
+   *   and slider) and is staggered into one of two rows to stay clickable -- the
+   *   placement (grabber-coordinate x in [0,584], and row) is taken from the
+   *   original Flash button layout. x -> percent: 2 + lx/584*96 (same mapping the
+   *   bar markers use, so a button lines up with its marker).
    * ======================================================================= */
+  // x positions from the original Flash button layout; rows chosen so adjacent
+  // buttons (especially the converging Lyman lines) alternate rows and don't collide.
+  const PRESET_POS = {
+    1:  { lx: 397.1, row: 0 }, 2:  { lx: 461.6, row: 0 }, 3:  { lx: 491.1, row: 1 },
+    4:  { lx: 507.0, row: 0 }, 5:  { lx: 525.1, row: 1 }, 6:  { lx: 74.0,  row: 1 },
+    7:  { lx: 94.0,  row: 0 }, 8:  { lx: 111.1, row: 1 }, 9:  { lx: 128.1, row: 0 },
+    10: { lx: 20.0,  row: 0 }, 11: { lx: 37.1,  row: 1 }, 12: { lx: 55.1,  row: 0 }
+  };
   const presetButtons = [];
   function buildPresetButtons() {
-    const rows = { L: document.getElementById("lyman-row"), H: document.getElementById("balmer-row"), P: document.getElementById("paschen-row") };
+    const axis = document.getElementById("preset-axis");
     for (let id = 1; id <= 12; id++) {
       const t = transitionsTable[id - 1];
       const p = sim.sliderMC.snapPointsList[id - 1];
+      const pos = PRESET_POS[id];
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "button sim-btn sim-preset";
+      btn.style.left = (2 + pos.lx / 584 * 96).toFixed(2) + "%";
+      btn.style.top = (pos.row * 2.35).toFixed(2) + "rem";
       btn.innerHTML = transitionLatex(t.letter, t.subscript);   // MathJax label, e.g. L-alpha
       // aria-label gives screen readers the plain-language name (MathJax is decorative here)
       btn.setAttribute("aria-label", seriesName(t.letter) + " " + GREEK_NAME[t.subscript] +
         ", level " + p.n1 + " to " + p.n2 + ", " + toFixed(p.e, 2) + " eV");
       btn.addEventListener("click", () => { if (!sim.sliderMC.buttonsMasked) sim.sliderMC.onButtonPressed(id); });
       presetButtons.push(btn);
-      rows[t.letter].appendChild(btn);
+      axis.appendChild(btn);
     }
     if (window.MathJax && window.MathJax.typesetPromise) {
       window.MathJax.typesetPromise(presetButtons).catch(function () {});
@@ -1159,6 +1161,9 @@ function seriesName(letter) {
     const oldLevel = sim.electronLevel;
     ad.e1.x = ad.levelPositions[level - 1]; ad.e2.x = ad.e1.x; ad.e1.y = 0; ad.e2.y = 0;
     sim.electronLevel = level;
+    ad.electronLevel = level;   // keep the Atom Diagram's own level in sync (used by
+                                // deexciteAtom for the log + animation, else the first
+                                // de-excitation reads a stale level and shows "1 -> x")
     sim.onElectronDragged(level);
     ad.orbitAlpha[level - 1] = AD.occupiedOrbitAlpha;
     if (level !== oldLevel && isFinite(oldLevel)) ad.orbitAlpha[oldLevel - 1] = AD.unoccupiedOrbitAlpha;

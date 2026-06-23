@@ -50,7 +50,12 @@ affordances built in, not a substitute for testing with real assistive technolog
   Pointer coordinates are mapped back through the canvas scale so the original
   nearest-level snapping math runs in stage coordinates at any display size.
 * Interactive targets meet the ≥ 44 px (2.75 rem) minimum from the foundation `.button`
-  / control styles. No hover-only affordances.
+  / control styles. No hover-only affordances. **Exception:** the 12 preset transition
+  buttons are deliberately small (~25 px) and packed because they are positioned along
+  the energy axis at each transition's energy (reproducing the original layout); they
+  remain fully keyboard-operable (Tab + Enter/Space) with descriptive `aria-label`s, and
+  the slider + Fire button provide a large-target alternative for choosing/firing a
+  photon. Flagged for human QA on touch devices.
 
 ## Live region / announcements (4.1.3)
 * `#sr-status` (`aria-live="polite"`) announces each committed event in wording

@@ -28,6 +28,11 @@ Other servers work too:
 npx serve          # or: npx http-server
 ```
 
+> **Tip for active development:** plain `http.server` lets the browser cache the JS/CSS,
+> so edits may not show on reload (do a hard refresh, Ctrl/Cmd+Shift+R). The repo also
+> includes a tiny no-cache dev server — from the project root run `python serve.py`
+> (also on http://localhost:8123/) and every reload picks up your latest changes.
+
 or the VS Code **Live Server** extension.
 
 Because you serve from inside `html5/`, the sim is at the server root, so the URL is

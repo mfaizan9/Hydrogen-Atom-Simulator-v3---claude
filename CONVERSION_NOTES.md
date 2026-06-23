@@ -53,13 +53,13 @@ empty, and `shapes/*.svg` are UI chrome replaced by foundation CSS / native cont
   original's cramped 20-tick canvas because they stay sharp at any zoom and match the
   foundation's high-contrast colors
   (`#1a1a1a` lines/text, `#c1272d` for the current selection). The energy diagram
-  positions the level lines on a **1/n vertical scale** — this keeps the levels
-  converging toward the 0 eV ionization limit but compresses the very large n=1→n=2 gap
-  so the figure is balanced; every level is labelled with its **exact** energy
-  `−13.6/n²` eV, and the crowded upper labels are nudged apart to a minimum gap and
-  joined to their line by thin leader lines. The photon scales share one energy axis
-  (so one marker shows the photon on all three). These are Goal-B (clarity/accessibility)
-  presentation choices; the physics is unchanged.
+  places the level lines **to scale at `E_n = −13.6/n²` eV**, so the 0 eV ionization
+  limit sits proportionally just above the bunched upper levels (n ≥ 3). Following the
+  original, the resulting crowding is handled by labelling **only the current level** —
+  the `n=N` / energy label (red) moves to whichever level the electron is on; the other
+  levels are plain tick lines. The photon scales share one energy axis (so one marker
+  shows the photon on all three). These are Goal-B (clarity/accessibility) presentation
+  choices; the physics is unchanged.
 
 The three photon scales are **positioned HTML** (not SVG) so their tick labels can be
 real **MathJax** (`10^{14}`, `500\,\text{nm}`, …). Each label is centered on its tick and
@@ -150,7 +150,10 @@ mathmaps) that must be present locally for the menu to work offline. Equations:
 * The **tick labels on the three photon scale bars** (`10^14` Hz, `500 nm`, `0…15` eV, …)
   are also MathJax, typeset once when the bars are built.
 * **Preset transition buttons** show the line as MathJax (`L_α`, `H_β`, `P_γ`, …); the
-  plain-language name stays on each button's `aria-label` for screen readers.
+  plain-language name stays on each button's `aria-label` for screen readers. As in the
+  original, each button is positioned along the energy axis at its transition's energy
+  (aligned with the bars and slider) and staggered into two rows so the converging Lyman
+  lines stay clickable.
 * **Event Log** entries render their math/symbols with MathJax — the transition
   (`1 → 2`, `1 → ∞`), the photon energy (`10.20 eV`), and the line descriptor (`L_α`) —
   typeset per entry as it is added; the type word (excitation/…) stays plain text.
@@ -178,10 +181,10 @@ are copied in byte-for-byte unchanged.
    preserved; on snap the thumb jumps to the snapped value.
 3. **Energy / photon diagrams redrawn.** The original's cramped 20-tick energy scale and
    busy triple-axis bar are redrawn as clean, high-contrast inline SVG / HTML (see
-   Rendering architecture). The energy diagram uses a **1/n vertical scale** (exact
-   energies labelled) with the crowded upper-level labels nudged apart and joined to
-   their lines by leaders; the photon bars share one energy axis with tick labels spaced
-   (and the wavelength row staggered) so they never
+   Rendering architecture). The energy diagram is **to scale (`E_n = −13.6/n²`)** with
+   only the current level labelled (as in the original) so the ionization limit stays
+   proportional and the bunched upper levels don't collide; the photon bars share one
+   energy axis with tick labels spaced (and the wavelength row staggered) so they never
    collide.
 4. **Event log.** The custom Flash scrollbar is replaced by native list scrolling. Log
    text is high-contrast dark (`#1a1a1a`) — the original's red→grey fade is replaced by

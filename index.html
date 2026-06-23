@@ -33,7 +33,9 @@
                   role="img" aria-label="Hydrogen atom diagram"
                   aria-describedby="atom-desc"></canvas>
         </div>
-        <p id="atom-desc" class="sr-only" aria-live="polite"></p>
+        <!-- describedby target for the canvas (read on navigation); not a live region
+             so it doesn't double-announce with #sr-status on each state change. -->
+        <p id="atom-desc" class="sr-only"></p>
 
         <fieldset class="control-fieldset">
           <legend class="control-fieldset__legend">Move the electron (demonstration)</legend>
@@ -69,7 +71,8 @@
           <div id="energy-level-eqn" class="sim-equation__math" aria-hidden="true"></div>
           <p id="energy-level-sr" class="sr-only"></p>
         </div>
-        <p id="scale-desc" class="sr-only" aria-live="polite"></p>
+        <!-- describedby target for the energy-level diagram; not live (see #atom-desc). -->
+        <p id="scale-desc" class="sr-only"></p>
       </section>
 
       <!-- Photon Selection -->
@@ -99,7 +102,9 @@
           <div id="photon-bars" class="sim-bars" role="img"
                aria-label="Frequency, wavelength, and energy scales with the current photon marked"
                aria-describedby="photon-desc"></div>
-          <p id="photon-desc" class="sr-only" aria-live="polite"></p>
+          <!-- describedby target for the photon scales; not live (the slider's
+               aria-valuetext already speaks the selected photon on each step). -->
+          <p id="photon-desc" class="sr-only"></p>
 
           <fieldset class="control-fieldset">
             <legend class="control-fieldset__legend">Photon energy</legend>
@@ -110,9 +115,11 @@
               <div class="sim-bar sim-slider-bar">
                 <span class="sim-bar__name" aria-hidden="true"></span>
                 <div class="sim-slider-track">
+                  <!-- aria-valuetext (set in simulation.js) speaks energy, wavelength,
+                       and frequency with quantity names and word units, so no
+                       aria-describedby is needed (it pointed at aria-hidden MathJax). -->
                   <input class="sim-slider" type="range"
-                         id="photon-range" min="1" max="584" step="1" value="178"
-                         aria-describedby="energy-eqn">
+                         id="photon-range" min="1" max="584" step="1" value="178">
                 </div>
               </div>
             </div>
@@ -138,7 +145,10 @@
         <div class="sim-log-controls">
           <button type="button" class="button sim-btn" id="clear-log-btn">Clear log</button>
         </div>
-        <ol id="log-list" class="sim-log" role="log" aria-live="polite"
+        <!-- aria-live is off here so events are announced once via #sr-status (the
+             single status region). role="log" + aria-label keep it a browsable record;
+             each entry carries an .sr-only word-unit sentence. -->
+        <ol id="log-list" class="sim-log" role="log" aria-live="off"
             aria-label="Event log, most recent entries at the bottom"></ol>
         <p id="log-empty" class="panel__help">No events yet. Fire a photon to begin.</p>
       </section>
@@ -174,6 +184,6 @@
   <script src="assets/mathjax/tex-mml-svg.js"></script>
 
   <!-- Sim logic -->
-  <script src="simulation.js?v=9"></script>
+  <script src="simulation.js?v=11"></script>
 </body>
 </html>

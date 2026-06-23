@@ -998,26 +998,49 @@ function seriesName(letter) {
   /* =========================================================================
    * 5e -- readouts / equations / live regions
    * ======================================================================= */
+  // Spoken-form helpers. Screen readers skip or mis-read unit symbols (eV, nm,
+  // µm, Hz) and the minus glyph, so EVERY spoken string (.sr-only / aria-valuetext
+  // / aria-label / live region) is built with unit WORDS and an explicit "minus".
+  // The visible MathJax readouts, axis labels, and log keep the symbols unchanged.
+  function spokenEnergyEV(eV, digits) {
+    const d = (digits == null) ? (eV >= 1 ? 1 : 2) : digits;
+    return toFixed(eV, d) + " electron volts";
+  }
+  function spokenWavelength() {
+    const w = sim.sliderMC.wavelengthNm;
+    if (w < 100)  return toFixed(w, 1) + " nanometers";
+    if (w < 1000) return Math.round(w) + " nanometers";
+    return toFixed(w / 1000, 2) + " micrometers";
+  }
+  function spokenFrequency(sn) {
+    return sn.coefficient + " times ten to the " + sn.exponent + " hertz";
+  }
   function updatePhotonReadouts() {
     const eb = sim.sliderMC;
     const sn = sciNotation(eb.frequency, 2);
     klunlShowEquation(["freq-eqn", freqLatex(sn.coefficient, sn.exponent)],
       ["freq-sr", "Frequency " + sn.coefficient + " times ten to the " + sn.exponent + " hertz"]);
-    klunlShowEquation(["wave-eqn", waveLatex()], ["wave-sr", "Wavelength " + eb.wavelengthString]);
+    klunlShowEquation(["wave-eqn", waveLatex()], ["wave-sr", "Wavelength " + spokenWavelength()]);
     const eStr = (eb.energyValue >= 1) ? toFixed(eb.energyValue, 1) : toFixed(eb.energyValue, 2);
     klunlShowEquation(["energy-eqn", energyLatex(eStr)], ["energy-sr", "Energy " + eStr + " electron volts"]);
     positionPhotonMarkers();
-    let vt = eb.energyString + ", " + eb.wavelengthString + ", " +
-             sn.coefficient + " times 10 to the " + sn.exponent + " Hz";
+    // Each spoken component carries its quantity name + value + word unit.
+    let vt = "Energy " + spokenEnergyEV(eb.energyValue) + ", wavelength " + spokenWavelength() +
+             ", frequency " + spokenFrequency(sn);
     if (eb.selectedTransition != null) {
       const p = eb.snapPointsList[eb.selectedTransition];
       const tid = sim.photonTransitionIDTable[p.n1][p.n2];
       if (tid != null) {
         const t = transitionsTable[tid];
-        vt = seriesName(t.letter) + " " + GREEK_NAME[t.subscript] + " (level " + p.n1 + " to " + p.n2 + "), " + vt;
+        vt = seriesName(t.letter) + " " + GREEK_NAME[t.subscript] +
+             " transition (level " + p.n1 + " to level " + p.n2 + "). " + vt;
       }
     }
     photonRange.setAttribute("aria-valuetext", vt);
+    // Keep the photon-scales describedby text current (read when navigating to the
+    // bars). Not a live region, so updating it per step does not flood announcements.
+    photonDesc.textContent = "Selected photon: energy " + spokenEnergyEV(eb.energyValue) +
+      ", wavelength " + spokenWavelength() + ", frequency " + spokenFrequency(sn) + ".";
   }
   function updateLevelUI() {
     renderScaleDiagram();
@@ -1036,7 +1059,7 @@ function seriesName(letter) {
     const lvl = sim.scaleMC.level;
     if (!isFinite(lvl)) return "The atom is ionized (the electron has been ejected).";
     const e = 13.6 / (lvl * lvl);
-    return "The electron is on level " + lvl + ", energy −" + toFixed(e, 1) + " eV.";
+    return "The electron is on level " + lvl + ", energy minus " + toFixed(e, 1) + " electron volts.";
   }
   function refreshStateDescriptions() {
     atomDesc.textContent = levelStateText();
@@ -1077,10 +1100,15 @@ function seriesName(letter) {
         `<span class="sim-log__energy">\\(${toFixed(e.energy, 2)}\\ \\text{eV}\\) photon</span>` +
         `<span class="sim-log__action">${le.photonAction}${descHtml}</span>`;
     }
+    // Visible columns (MathJax energy/transition with symbol units) are hidden from
+    // the accessibility tree; an .sr-only companion carries the word-unit sentence so
+    // browsing the log reads clean prose. (.sr-only is out of flow, so the 3-column
+    // grid layout is unaffected.)
     li.innerHTML =
-      `<span class="sim-log__type">${le.noType ? "" : le.typeText}</span>` +
-      `<span class="sim-log__transition">${transitionLatexArrow(le)}</span>` +
-      `<span class="sim-log__photon">${photonHtml}</span>`;
+      `<span class="sim-log__type" aria-hidden="true">${le.noType ? "" : le.typeText}</span>` +
+      `<span class="sim-log__transition" aria-hidden="true">${transitionLatexArrow(le)}</span>` +
+      `<span class="sim-log__photon" aria-hidden="true">${photonHtml}</span>` +
+      `<span class="sr-only">${eventMessage(le)}</span>`;
     logList.appendChild(li);
     logList.scrollTop = logList.scrollHeight;
     if (window.MathJax && window.MathJax.typesetPromise) {
@@ -1090,19 +1118,24 @@ function seriesName(letter) {
     }
     announceEvent(le);
   }
-  function announceEvent(le) {
+  // Units-complete prose for one log event. Used both for the live announcement
+  // (#sr-status) and as each log entry's .sr-only companion, so browsing the log
+  // by keyboard reads the same word-unit sentence (the visible MathJax columns are
+  // aria-hidden). "eV" -> "electron volt(s)" so the unit is actually spoken.
+  function eventMessage(le) {
     const e = le.entry;
-    let msg = "";
     const desc = le.descriptor ? " (" + le.descriptorName + ")" : "";
+    const photon = (e.energy != null) ? toFixed(e.energy, 2) + " electron volt photon" : "photon";
     switch (e.type) {
-      case "e": msg = "Excitation. " + le.photonEnergy + " absorbed" + desc + ". Electron moved from level " + e.oldLevel + " to level " + e.newLevel + "."; break;
-      case "d": msg = "Deexcitation. " + le.photonEnergy + " emitted" + desc + ". Electron moved from level " + e.oldLevel + " to level " + e.newLevel + "."; break;
-      case "i": msg = "Ionization. " + le.photonEnergy + " absorbed" + desc + ". Electron ejected from level " + e.oldLevel + "; the atom is now ionized."; break;
-      case "r": msg = "Recombination. Electron recaptured into level " + e.newLevel + ". The atom is no longer ionized."; break;
-      case "n": msg = le.photonEnergy + " not absorbed; it passed through the atom."; break;
+      case "e": return "Excitation. " + photon + " absorbed" + desc + ". Electron moved from level " + e.oldLevel + " to level " + e.newLevel + ".";
+      case "d": return "Deexcitation. " + photon + " emitted" + desc + ". Electron moved from level " + e.oldLevel + " to level " + e.newLevel + ".";
+      case "i": return "Ionization. " + photon + " absorbed" + desc + ". Electron ejected from level " + e.oldLevel + "; the atom is now ionized.";
+      case "r": return "Recombination. Electron recaptured into level " + e.newLevel + ". The atom is no longer ionized.";
+      case "n": return photon + " not absorbed; it passed through the atom.";
     }
-    srStatus.textContent = msg;
+    return "";
   }
+  function announceEvent(le) { srStatus.textContent = eventMessage(le); }
   sim.logMC.onAdd = renderLogEntry;
   sim.logMC.onClear = function () { logList.innerHTML = ""; logEmpty.hidden = false; };
 
@@ -1137,7 +1170,7 @@ function seriesName(letter) {
       btn.innerHTML = transitionLatex(t.letter, t.subscript);   // MathJax label, e.g. L-alpha
       // aria-label gives screen readers the plain-language name (MathJax is decorative here)
       btn.setAttribute("aria-label", seriesName(t.letter) + " " + GREEK_NAME[t.subscript] +
-        ", level " + p.n1 + " to " + p.n2 + ", " + toFixed(p.e, 2) + " eV");
+        " transition, level " + p.n1 + " to level " + p.n2 + ", " + toFixed(p.e, 2) + " electron volts");
       btn.addEventListener("click", () => { if (!sim.sliderMC.buttonsMasked) sim.sliderMC.onButtonPressed(id); });
       presetButtons.push(btn);
       axis.appendChild(btn);
@@ -1155,9 +1188,8 @@ function seriesName(letter) {
     photonRange.value = String(Math.round(sim.sliderMC.grabberX));
     updatePhotonReadouts();
   });
-  photonRange.addEventListener("change", () => {
-    photonDesc.textContent = "Photon selected: " + sim.sliderMC.energyString + ", " + sim.sliderMC.wavelengthString + ".";
-  });
+  // (Photon selection is spoken by the slider's own aria-valuetext on each step;
+  //  #photon-desc is kept current inside updatePhotonReadouts as a describedby target.)
 
   /* =========================================================================
    * 5i -- "move the electron" demonstration (dropdown + canvas drag)

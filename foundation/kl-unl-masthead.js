@@ -49,7 +49,7 @@ class KLUNLMasthead extends HTMLElement {
     const hasHelpContent = ( mastheadData.help && mastheadData.help.content.trim() !== "" );
 
     this.shadowRoot.innerHTML = `
-      <link href="../foundation/kl-unl.css" type="text/css" rel="stylesheet" media="all">
+      <link href="foundation/kl-unl.css?v=9" type="text/css" rel="stylesheet" media="all">
       <style>
         :host {
           display:             block;
@@ -130,6 +130,20 @@ class KLUNLMasthead extends HTMLElement {
           color:               var(--background-color,          #ffffff);
           background-color:    var(--button-background-color,   #005a9c);
           border:              none;
+        }
+        /* Visually hidden, available to screen readers. Defined inline so the
+           screen-reader description stays hidden even if the external stylesheet
+           below fails to resolve (e.g. when hosted under a project subpath). */
+        .sr-only {
+          position:            absolute;
+          width:               1px;
+          height:              1px;
+          padding:             0;
+          margin:              -1px;
+          overflow:            hidden;
+          clip:                rect(0, 0, 0, 0);
+          white-space:         nowrap;
+          border:              0;
         }
       </style>
 

@@ -180,6 +180,13 @@ body { font-size: 1.125rem; }
   position: absolute; top: -0.05rem; transform: translateX(-50%);
   font-size: 0.72rem; color: #555; white-space: nowrap;
 }
+/* Standalone EM-spectrum legend, relocated below the energy bar. Region names sit
+   on the top row with the colored visible band beneath them. Vertical margins are
+   matched to the 1rem flex gap above so it sits centered before the Photon controls. */
+.sim-spectrum { margin: 0 0 0.75rem; }
+.sim-spectrum__track { height: 1.55rem; }
+.sim-spectrum .sim-bar__region { top: 0; }
+.sim-spectrum .sim-bar__band { top: auto; bottom: 0; }
 .sim-bar__marker {
   position: absolute; top: 0.15rem; width: 3px; height: 1.3rem;
   background: #c1272d; transform: translateX(-50%);

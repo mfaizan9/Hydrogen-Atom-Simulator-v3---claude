@@ -908,18 +908,25 @@ function seriesName(letter) {
     const energyRow =
       `<div class="sim-bar"><div class="sim-bar__name">energy (eV)</div>` +
         `<div class="sim-bar__track">` +
-          `<div class="sim-bar__band" style="left:${visL.toFixed(2)}%;width:${(visR - visL).toFixed(2)}%"></div>` +
           `<div class="sim-bar__line"></div>` +
           barTick(0) + barTick(5) + barTick(10) + barTick(15) +
           barLabel(0, `\\(0\\)`) + barLabel(5, `\\(5\\)`) +
           barLabel(10, `\\(10\\)`) + barLabel(15, `\\(15\\)`) +
-          `<span class="sim-bar__region" style="left:${pct(0.6)}%">infrared</span>` +
-          `<span class="sim-bar__region" style="left:${visMid}%">visible</span>` +
-          `<span class="sim-bar__region" style="left:${pct(8)}%">ultraviolet</span>` +
           barMarker('energy') +
         `</div></div>`;
 
-    photonBars.innerHTML = `<div class="sim-bars-inner">${freqRow}${waveRow}${energyRow}</div>`;
+    // EM-spectrum legend (colored visible band + region names), shown on its own
+    // strip below the energy bar and centered before the Photon energy controls.
+    const spectrumStrip =
+      `<div class="sim-bar sim-spectrum">` +
+        `<div class="sim-bar__track sim-spectrum__track">` +
+          `<div class="sim-bar__band" style="left:${visL.toFixed(2)}%;width:${(visR - visL).toFixed(2)}%"></div>` +
+          `<span class="sim-bar__region" style="left:${pct(0.6)}%">infrared</span>` +
+          `<span class="sim-bar__region" style="left:${visMid}%">visible</span>` +
+          `<span class="sim-bar__region" style="left:${pct(8)}%">ultraviolet</span>` +
+        `</div></div>`;
+
+    photonBars.innerHTML = `<div class="sim-bars-inner">${freqRow}${waveRow}${energyRow}${spectrumStrip}</div>`;
     if (window.MathJax && window.MathJax.typesetPromise) {
       window.MathJax.typesetPromise([photonBars]).catch(function () {});
     }
